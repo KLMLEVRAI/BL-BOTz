@@ -3,8 +3,26 @@ import json
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+from threading import Thread
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# Charger le .env
+# ===================== MINI SERVEUR HTTP =====================
+PORT = 8080
+
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot Discord en ligne !")
+
+def run_server():
+    server = HTTPServer(("0.0.0.0", PORT), SimpleHandler)
+    print(f"🌐 Serveur HTTP en ligne sur le port {PORT}")
+    server.serve_forever()
+
+Thread(target=run_server, daemon=True).start()
+
+# ===================== ENVIRONNEMENT =====================
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
@@ -23,7 +41,7 @@ def load_blacklist():
         try:
             with open(BLACKLIST_FILE, "r") as f:
                 data = f.read().strip()
-                if not data:  # fichier vide
+                if not data:
                     return set()
                 return set(json.loads(data))
         except Exception as e:

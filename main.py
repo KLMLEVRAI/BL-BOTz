@@ -17,20 +17,27 @@ bot = commands.Bot(command_prefix="&", intents=intents, help_command=None)
 
 BLACKLIST_FILE = "blacklist.json"
 
-# Charger la blacklist depuis un fichier JSON
+# ===================== BLACKLIST JSON =====================
 def load_blacklist():
     if os.path.exists(BLACKLIST_FILE):
-        with open(BLACKLIST_FILE, "r") as f:
-            return set(json.load(f))
+        try:
+            with open(BLACKLIST_FILE, "r") as f:
+                data = f.read().strip()
+                if not data:  # fichier vide
+                    return set()
+                return set(json.loads(data))
+        except Exception as e:
+            print(f"⚠️ Erreur lecture {BLACKLIST_FILE}: {e}")
+            return set()
     return set()
 
-# Sauvegarder la blacklist dans un fichier JSON
 def save_blacklist():
     with open(BLACKLIST_FILE, "w") as f:
         json.dump(list(blacklist), f)
 
 blacklist = load_blacklist()
 
+# ===================== EVENTS =====================
 @bot.event
 async def on_ready():
     print(f"✅ Connecté en tant que {bot.user}")
@@ -42,9 +49,9 @@ async def on_member_join(member):
             await member.ban(reason="Blacklist globale")
             print(f"🚫 {member} a été banni car il est sur la blacklist.")
         except Exception as e:
-            print(f"Erreur ban {member}: {e}")
+            print(f"❌ Erreur ban {member}: {e}")
 
-# ===================== BLACKLIST =====================
+# ===================== COMMANDES BLACKLIST =====================
 @bot.group()
 async def bl(ctx):
     if ctx.invoked_subcommand is None:
@@ -101,4 +108,7 @@ async def help(ctx):
     await ctx.send(embed=embed)
 
 # ===================== RUN =====================
-bot.run(TOKEN)
+if not TOKEN:
+    print("❌ ERREUR : le token Discord n'a pas été trouvé dans .env (DISCORD_TOKEN).")
+else:
+    bot.run(TOKEN)
